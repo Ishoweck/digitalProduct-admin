@@ -9,6 +9,7 @@ import {
   CreditCard,
   MessageSquare,
   Tags,
+  DollarSign
   // Wallet,
 } from 'lucide-react';
 
@@ -22,6 +23,8 @@ const links = [
   { path: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
   { path: '/admin/categories', label: 'Categories', icon: Tags },
   { path: '/admin/signup', label: 'Create Admin', icon: Users },
+    { path: '/admin/withdrawals', label: 'Withdrawals', icon: DollarSign }, // <-- new
+
 
   // { path: '/admin/wallet', label: 'Wallet', icon: Wallet },
 ];

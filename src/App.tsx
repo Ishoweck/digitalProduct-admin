@@ -25,6 +25,7 @@ import OrderDetails from "./pages/OrderDetails";
 import PaymentDetails from "./pages/PaymentDetails";
 import AdminSignup from "./pages/AdminSignup"
 import RequireSuperAdmin from "./components/RequireSuperAdmin"
+import Withdrawals from "./pages/Withdrwals"
 
 
 export default function App() {
@@ -55,6 +56,8 @@ export default function App() {
                   <Route path="products/:id" element={<ProductDetails />} />
                   <Route path="/orders/:id" element={<OrderDetails />} />
                   <Route path="/payments/:paymentId" element={<PaymentDetails />} />
+                  <Route path="/withdrawals" element={<Withdrawals />} />
+
                     <Route
     path="/signup"
     element={

@@ -1,6 +1,7 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
+import toast from "react-hot-toast";
 
 type Product = {
   _id: string;
@@ -27,6 +28,10 @@ export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Modal visibility state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -57,6 +62,22 @@ export default function ProductDetails() {
       console.error("Approval failed:", err);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!product) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/admin/products/${product._id}`);
+      toast.success("Product deleted successfully");
+      navigate(-1);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete product");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -108,7 +129,7 @@ export default function ProductDetails() {
         <p>
           <strong>Vendor:</strong>{" "}
           <Link
-            to={`/vendors/${product.vendorId}`}
+            to={`/admin/vendors/${product.vendorId}`}
             className="text-blue-600 hover:underline"
           >
             View Vendor
@@ -130,23 +151,64 @@ export default function ProductDetails() {
         </p>
       </div>
 
-      {/* Approval Actions */}
+      {/* Approval & Delete Actions */}
       <div className="mt-6 flex gap-4">
         <button
           onClick={() => handleApproval("APPROVED")}
-          disabled={actionLoading}
+          disabled={actionLoading || deleteLoading}
           className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
         >
           Approve
         </button>
         <button
           onClick={() => handleApproval("REJECTED")}
-          disabled={actionLoading}
+          disabled={actionLoading || deleteLoading}
           className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
         >
           Reject
         </button>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          disabled={actionLoading || deleteLoading}
+          className="px-4 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50"
+        >
+          {deleteLoading ? "Deleting..." : "Delete"}
+        </button>
       </div>
+
+
+     {/* Delete Confirmation Modal */}
+{showDeleteModal && (
+  <div
+    className="fixed inset-0 flex items-center justify-center z-50 bg-white bg-opacity-10 backdrop-blur-md"
+    style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+  >
+    <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 border border-white border-opacity-30">
+      <h2 className="text-xl font-bold mb-4 text-black">Confirm Delete</h2>
+      <p className="mb-6 text-black">
+        Are you sure you want to delete the product{" "}
+        <strong>{product.name}</strong>? This action cannot be undone.
+      </p>
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={() => setShowDeleteModal(false)}
+          disabled={deleteLoading}
+          className="px-4 py-2 rounded border border-white border-opacity-50 hover:bg-white hover:bg-opacity-20 text-black"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDeleteConfirmed}
+          disabled={deleteLoading}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+        >
+          {deleteLoading ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
