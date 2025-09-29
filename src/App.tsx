@@ -56,7 +56,14 @@ export default function App() {
                   <Route path="products/:id" element={<ProductDetails />} />
                   <Route path="/orders/:id" element={<OrderDetails />} />
                   <Route path="/payments/:paymentId" element={<PaymentDetails />} />
-                  <Route path="/withdrawals" element={<Withdrawals />} />
+                  <Route path="/withdrawals" element={
+                    <RequireSuperAdmin>
+                            <Withdrawals />
+
+                    </RequireSuperAdmin>
+              
+                    
+                   } />
 
                     <Route
     path="/signup"
