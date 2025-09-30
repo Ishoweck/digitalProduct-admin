@@ -1,6 +1,6 @@
 // src/pages/VendorDetails.tsx
 
-import  { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import "../index.css"
@@ -46,6 +46,9 @@ export default function VendorDetails() {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteReason, setDeleteReason] = useState('')
+
   useEffect(() => {
     const fetchVendor = async () => {
       setLoading(true)
@@ -53,7 +56,6 @@ export default function VendorDetails() {
         const res = await api.get(`/admin/vendors/${id}`)
         const rawVendor = res.data.data
 
-        // Normalize verificationDocuments
         const documents = rawVendor.verificationDocuments || []
         rawVendor.verificationDocuments = documents.map((doc: any) => {
           if (typeof doc === 'string') {
@@ -61,8 +63,7 @@ export default function VendorDetails() {
           }
           return doc
         })
-        console.log(rawVendor);
-        
+
         setVendor(rawVendor)
       } catch (err) {
         console.error('Error fetching vendor:', err)
@@ -81,8 +82,6 @@ export default function VendorDetails() {
     if (!vendor) return
     setActionLoading(true)
 
-    console.log(status);
-    
     try {
       await api.patch(`/vendors/${vendor._id}/verify`, {
         verificationStatus: status,
@@ -91,6 +90,33 @@ export default function VendorDetails() {
       setVendor({ ...vendor, verificationStatus: status, rejectionReason: reason })
     } catch (err) {
       console.error('Verification failed:', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleVendorDeleteRequest = async () => {
+    if (!vendor || !deleteReason.trim()) {
+      alert("Please provide a reason for deletion.")
+      return
+    }
+
+    setActionLoading(true)
+
+    try {
+      await api.post("/deletion/admin-submit", {
+        accountId: vendor._id,
+        accountType: "Vendor",
+        reason: deleteReason,
+      })
+
+      alert("Vendor deletion request submitted successfully.")
+      setShowDeleteModal(false)
+      setDeleteReason("")
+      navigate("/admin/vendors") // or stay on page
+    } catch (err: any) {
+      console.error("Deletion request failed:", err)
+      alert(err?.response?.data?.message || "Failed to submit deletion request.")
     } finally {
       setActionLoading(false)
     }
@@ -241,28 +267,39 @@ export default function VendorDetails() {
         </div>
       )}
 
-   {(vendor.verificationStatus === 'NOT_VERIFIED' || vendor.verificationStatus === 'PENDING') && (
-  <div className="mt-6 flex flex-wrap gap-4">
-    <button
-      onClick={() => handleVerification('APPROVED')}
-      disabled={actionLoading}
-      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 transition"
-    >
-      Approve
-    </button>
-    <button
-      onClick={() => setShowRejectModal(true)}
-      disabled={actionLoading}
-      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 transition"
-    >
-      Reject
-    </button>
-  </div>
-)}
+      {(vendor.verificationStatus === 'NOT_VERIFIED' || vendor.verificationStatus === 'PENDING') && (
+        <div className="mt-6 flex flex-wrap gap-4">
+          <button
+            onClick={() => handleVerification('APPROVED')}
+            disabled={actionLoading}
+            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 transition"
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => setShowRejectModal(true)}
+            disabled={actionLoading}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 transition"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+
+      {/* Delete Button */}
+      <div className="mt-6">
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          disabled={actionLoading}
+          className="px-6 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg disabled:opacity-50 transition"
+        >
+          Request Deletion
+        </button>
+      </div>
 
       {/* Rejection Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+<div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/10">
           <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
             <h2 className="text-lg font-bold mb-4 text-red-600">Reject Vendor</h2>
             <textarea
@@ -295,6 +332,39 @@ export default function VendorDetails() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
               >
                 Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deletion Modal */}
+      {showDeleteModal && (
+<div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/10">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+            <h2 className="text-lg font-bold mb-4 text-red-700">Request Vendor Deletion</h2>
+            <textarea
+              rows={4}
+              className="w-full border rounded p-2"
+              placeholder="Enter reason for deletion..."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteReason('')
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVendorDeleteRequest}
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded"
+              >
+                Confirm Deletion
               </button>
             </div>
           </div>

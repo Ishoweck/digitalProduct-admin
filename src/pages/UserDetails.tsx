@@ -1,5 +1,4 @@
-// src/pages/UserDetails.tsx
-import  { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 
@@ -25,6 +24,9 @@ export default function UserDetails() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteReason, setDeleteReason] = useState("")
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -54,13 +56,40 @@ export default function UserDetails() {
     }
   }
 
-  if (loading) return <p>Loading...</p>
-  if (!user) return <p>User not found</p>
+  const handleUserDeleteRequest = async () => {
+    if (!user || !deleteReason.trim()) {
+      alert("Please provide a reason for deletion.")
+      return
+    }
+
+    setActionLoading(true)
+
+    try {
+      await api.post("/deletion/admin-submit", {
+        accountId: user._id,
+        accountType: "User",
+        reason: deleteReason,
+      })
+
+      alert("User deletion request submitted successfully.")
+      setShowDeleteModal(false)
+      setDeleteReason("")
+      navigate("/admin/users") // or stay on page
+    } catch (err: any) {
+      console.error("Deletion request failed:", err)
+      alert(err?.response?.data?.message || "Failed to submit deletion request.")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  if (loading) return <p className="text-center mt-10 text-gray-600">Loading...</p>
+  if (!user) return <p className="text-center mt-10 text-red-500">User not found</p>
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto px-4 py-6">
       <button
-        className="text-gray-500 mb-4 underline"
+        className="text-gray-600 hover:text-black mb-4 inline-block"
         onClick={() => navigate(-1)}
       >
         ← Back
@@ -82,23 +111,67 @@ export default function UserDetails() {
         <p><strong>Last Login:</strong> {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "-"}</p>
       </div>
 
-      {/* Actions */}
-      <div className="mt-6 flex gap-4">
+      {/* Status Buttons */}
+      <div className="mt-6 flex flex-wrap gap-4">
         <button
           onClick={() => handleStatusChange("ACTIVE")}
           disabled={actionLoading}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 transition"
         >
           Activate
         </button>
         <button
           onClick={() => handleStatusChange("SUSPENDED")}
           disabled={actionLoading}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 transition"
         >
           Suspend
         </button>
       </div>
+
+      {/* Delete Button */}
+      <div className="mt-6">
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          disabled={actionLoading}
+          className="px-6 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg disabled:opacity-50 transition"
+        >
+          Request Deletion
+        </button>
+      </div>
+
+      {/* Deletion Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/10">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+            <h2 className="text-lg font-bold mb-4 text-red-700">Request User Deletion</h2>
+            <textarea
+              rows={4}
+              className="w-full border rounded p-2"
+              placeholder="Enter reason for deletion..."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteReason("")
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUserDeleteRequest}
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded"
+              >
+                Confirm Deletion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

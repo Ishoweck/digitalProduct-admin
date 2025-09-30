@@ -10,8 +10,8 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
-  LineChart,
-  Line,
+  // LineChart,
+  // Line,
   PieChart,
   Pie,
   Cell,
@@ -42,6 +42,7 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const res = await api.get("/admin/dashboard/stats");
+        console.log(res.data);
         setStats(res.data.data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats", err);
@@ -53,7 +54,7 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
-  if (loading) return <Loader/>;
+  if (loading) return <Loader />;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!stats) return null;
 
@@ -62,7 +63,7 @@ export default function Dashboard() {
     count,
   }));
 
-  const revenueTimeData = stats.orders.revenueOverTime ?? [];
+  // const revenueTimeData = stats.orders.revenueOverTime ?? [];
 
   const productStatusData = [
     { name: "Approved", value: stats.products.approved },
@@ -77,6 +78,13 @@ export default function Dashboard() {
   ];
 
   const COLORS = ["#34d399", "#facc15", "#f87171"];
+
+  // Format revenue with NGN symbol and commas
+  const currencySymbol = "₦";
+  const formattedRevenue = stats.orders.revenue.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return (
     <div>
@@ -100,7 +108,7 @@ export default function Dashboard() {
         </ChartCard>
 
         {/* Revenue Over Time */}
-        <ChartCard title="Revenue Over Time">
+        {/* <ChartCard title="Revenue Over Time">
           {revenueTimeData.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={revenueTimeData}>
@@ -121,7 +129,7 @@ export default function Dashboard() {
           ) : (
             <p className="text-gray-500">No revenue time data available</p>
           )}
-        </ChartCard>
+        </ChartCard> */}
 
         {/* Product Status */}
         <ChartCard title="Product Status Breakdown">
@@ -157,7 +165,7 @@ export default function Dashboard() {
       {/* Stat Cards Below */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Revenue & Total */}
-        <StatCard title="Revenue" value={`$${stats.orders.revenue.toFixed(2)}`} />
+        <StatCard title="Revenue" value={`${currencySymbol}${formattedRevenue}`} />
         <StatCard title="Total Orders" value={stats.orders.total} />
         <StatCard title="Total Products" value={stats.products.total} />
         <StatCard title="Total Users" value={stats.users.total} />

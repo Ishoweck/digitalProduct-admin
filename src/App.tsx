@@ -26,6 +26,7 @@ import PaymentDetails from "./pages/PaymentDetails";
 import AdminSignup from "./pages/AdminSignup"
 import RequireSuperAdmin from "./components/RequireSuperAdmin"
 import Withdrawals from "./pages/Withdrwals"
+import DeleteAcct from "./pages/DeleteAcct"
 
 
 export default function App() {
@@ -59,7 +60,6 @@ export default function App() {
                   <Route path="/withdrawals" element={
                     <RequireSuperAdmin>
                             <Withdrawals />
-
                     </RequireSuperAdmin>
               
                     
@@ -70,6 +70,14 @@ export default function App() {
     element={
       <RequireSuperAdmin>
         <AdminSignup />
+      </RequireSuperAdmin>
+    }
+  />
+                    <Route
+    path="/DeletionRequest"
+    element={
+      <RequireSuperAdmin>
+        <DeleteAcct />
       </RequireSuperAdmin>
     }
   />
